@@ -1,7 +1,5 @@
 // cesun, 9/17/20 10:02 AM.
 
-
-
 namespace qselect {
 #define MAXN 50005
     struct FreqValue {
