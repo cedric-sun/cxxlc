@@ -1,0 +1,10 @@
+#!/bin/bash
+
+oj=(uva poj hdu leetcode)
+# begin cleaning
+
+for d in src/{
+
+>Makefile cat <<EOF
+EOF
+
