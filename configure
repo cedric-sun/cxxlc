@@ -1,10 +1,87 @@
 #!/bin/bash
 
-oj=(uva poj hdu leetcode)
-# begin cleaning
+# ---------- CONFIG ----------
+oj_names=(hdu uva poj leetcode)
 
-for d in src/{
+hdu_block=()
+uva_block=()
+poj_block=()
+leetcode_block=()
+# ---------- CONFIG END ----------
 
->Makefile cat <<EOF
+oj_makefiles=("${oj_names[@]/#/src/}")
+oj_makefiles=("${oj_makefiles[@]/%//Makefile}")
+
+rm -vf bin Makefile 
+
+# print the main Makefile
+(
+cat <<EOF
+all: hdu uva poj leetcode
+
 EOF
 
+for oj in "${oj_names[@]}"; do
+	cat <<EOF
+${oj}:
+	\$(MAKE) -C "src/${oj}"
+
+EOF
+done
+
+cat<<EOF
+clean:
+	rm -rf bin
+EOF
+
+for oj in "${oj_names[@]}"; do
+	echo -e "\t\$(MAKE) -C src/$oj clean"
+done
+
+cat <<EOF
+distclean: clean
+	rm -rf Makefile "${oj_makefiles[@]}"
+EOF
+)>Makefile
+
+echo "Generated: $(realpath Makefile)"
+
+
+cd src
+# print sub-Makefiles
+for oj in "${oj_names[@]}"; do
+	cd "$oj"
+	echo "In $(pwd):"
+	rm -vf Makefile
+	(
+	tmp=( * )
+	files=()
+	# remove files that is not c or c++ sources
+	for f in "${tmp[@]}"; do
+		suffix="${f##*.}"
+		if [[ "$suffix" == "c" || "$suffix" == "cpp" || "$suffix" == "cc" ]]; then
+			files+=("$f")
+		fi
+	done
+	unset tmp
+	cat <<EOF
+all: ${files[@]%.*}
+
+clean:
+	rm -vf ${files[@]%.*}
+
+EOF
+
+
+	for f in "${files[@]}";do
+		tgt="${f%.*}"
+		cat <<EOF
+${tgt}: ${f}
+	gcc -o ${tgt} ${f}
+
+EOF
+	done
+	)>Makefile
+	echo -en "Generated: $(realpath Makefile)\n\n"
+	cd ..
+done
