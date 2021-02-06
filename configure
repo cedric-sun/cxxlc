@@ -5,14 +5,14 @@ oj_names=(hdu uva poj leetcode)
 
 hdu_block=()
 uva_block=()
-poj_block=()
+poj_block=(1017.cc 1198.cc)
 leetcode_block=()
 # ---------- CONFIG END ----------
 
 oj_makefiles=("${oj_names[@]/#/src/}")
 oj_makefiles=("${oj_makefiles[@]/%//Makefile}")
 
-rm -vf bin Makefile 
+rm -f bin Makefile 
 
 # print the main Makefile
 (
@@ -39,20 +39,22 @@ for oj in "${oj_names[@]}"; do
 done
 
 cat <<EOF
+
 distclean: clean
-	rm -rf Makefile "${oj_makefiles[@]}"
+	rm -rf Makefile ${oj_makefiles[@]}
 EOF
 )>Makefile
-
-echo "Generated: $(realpath Makefile)"
 
 
 cd src
 # print sub-Makefiles
 for oj in "${oj_names[@]}"; do
 	cd "$oj"
-	echo "In $(pwd):"
-	rm -vf Makefile
+	rm -f Makefile
+	blocklist_name="${oj}_block"
+	eval "blocklist=( \"\${${blocklist_name}[@]}\")"
+	echo "Using ${blocklist_name}: ${blocklist[@]}"
+	unset blocklist_name
 	(
 	tmp=( * )
 	files=()
@@ -60,7 +62,9 @@ for oj in "${oj_names[@]}"; do
 	for f in "${tmp[@]}"; do
 		suffix="${f##*.}"
 		if [[ "$suffix" == "c" || "$suffix" == "cpp" || "$suffix" == "cc" ]]; then
-			files+=("$f")
+			if [[ ! " ${blocklist[@]} " =~ " ${f} " ]]; then
+				files+=("$f")
+			fi
 		fi
 	done
 	unset tmp
@@ -68,7 +72,7 @@ for oj in "${oj_names[@]}"; do
 all: ${files[@]%.*}
 
 clean:
-	rm -vf ${files[@]%.*}
+	rm -f ${files[@]%.*}
 
 EOF
 
@@ -82,6 +86,5 @@ ${tgt}: ${f}
 EOF
 	done
 	)>Makefile
-	echo -en "Generated: $(realpath Makefile)\n\n"
 	cd ..
 done
